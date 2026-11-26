@@ -1,4 +1,4 @@
-// Teaching extension driven by the original Simewu Miner, Header and Network objects.
+// Test extension driven by the original Simewu Miner, Header and Network objects.
 export const modes = {
   majority:'51% Attack', finney:'Finney Attack', race:'Race Attack', double:'Double-Spend Attack'
 };
@@ -13,7 +13,7 @@ export function ledger(chain) {
     const block=chain[i];
     if(!block || block.height!==i || !block.isBlock())throw Error('Invalid native block');
     if(i && block.prevHash!==chain[i-1].hash)throw Error('Block links do not match');
-    for(const tx of block.teachingTransactions||[]) {
+    for(const tx of block.transactions||[]) {
       const coin=coins.get(tx.input);
       if(!tx.id || ids.has(tx.id) || !coin || coin.owner!==tx.owner || coin.value!==tx.value || !Number.isFinite(tx.value) || tx.value<=0 || typeof tx.to!=='string')throw Error(`${tx.id} references a spent or invalid UTXO`);
       ids.add(tx.id);
@@ -25,7 +25,7 @@ export function ledger(chain) {
 export function validateConfig(api, input) {
   const config={mode:'majority',q:60,confirmations:1,seed:42,defended:false,fee:3,delay:2,validation:false,...input};
   const net=api.network(), nodes=Object.values(net.peers);
-  if(!modes[config.mode])throw Error('Select an experiment type.');
+  if(!modes[config.mode])throw Error('Select a test scenario.');
   if(nodes.length<2||!net.peers[config.attacker]||!net.peers[config.merchant]||config.attacker===config.merchant)throw Error('Choose different attacker and merchant nodes. At least two nodes are required.');
   for(const [key,min,max,integer] of [['q',1,90,false],['confirmations',0,100,true],['seed',0,4294967295,true],['delay',0,20,false],['fee',1,100,false]]) {
     const value=Number(config[key]);
@@ -34,7 +34,7 @@ export function validateConfig(api, input) {
   }
   for(const key of ['defended','validation'])if(typeof config[key]!=='boolean')throw Error('Invalid switch: '+key+'.');
   if(nodes.some(n=>!Number.isFinite(n.power)||n.power<0))throw Error('Node power must be finite and non-negative.');
-  if(net.useSHA256)throw Error('Teaching mode uses simplified PoW. Turn off Use secure SHA-256 in Network first.');
+  if(net.useSHA256)throw Error('Test mode uses simplified PoW. Turn off Use secure SHA-256 in Network first.');
   if(!(net.difficulty>0&&net.difficulty<=1))throw Error('The difficulty target must be greater than 0 and at most 1.');
   return config;
 }
@@ -52,8 +52,8 @@ export class NativeSession {
     this.origPower=new Map(this.nodes.map(n=>[n.ID,n.power]));
     this.honest=this.nodes.filter(n=>n!==this.attacker);
     this.adjustPowers();
-    this.attacker.teachingRole='Attacker';this.merchant.teachingRole='Merchant observer';
-    this.log('Teaching session loaded',`Using ${this.nodes.length} existing miners. Attacker: ${this.attacker.name}; merchant observer: ${this.merchant.name}.`);
+    this.attacker.testRole='Attacker';this.merchant.testRole='Merchant observer';
+    this.log('Test session loaded',`Using ${this.nodes.length} existing miners. Attacker: ${this.attacker.name}; merchant observer: ${this.merchant.name}.`);
   }
   adjustPowers() {
     const q=(this.config.defended&&this.config.mode==='majority'?Math.min(30,this.config.q):this.config.q)/100;
@@ -64,23 +64,23 @@ export class NativeSession {
   }
   log(title,detail){this.logs.push({time:this.time,title,detail});}
   chain(node){return node.blockchain.slice(0,node.currentHeader.height);}
-  get confirmations(){const chain=this.chain(this.merchant);const i=chain.findIndex(b=>(b.teachingTransactions||[]).some(t=>t.id==='TX-A'));return i<0?0:chain.length-i;}
+  get confirmations(){const chain=this.chain(this.merchant);const i=chain.findIndex(b=>(b.transactions||[]).some(t=>t.id==='TX-A'));return i<0?0:chain.length-i;}
   get balance(){return [...ledger(this.chain(this.merchant)).values()].filter(c=>c.owner==='Merchant').reduce((s,c)=>s+c.value,0);}
   get threshold(){return this.config.defended?Math.max(1,this.config.confirmations):this.config.confirmations;}
-  get statusA(){return this.confirmations?'Confirmed':this.chain(this.merchant).some(b=>(b.teachingTransactions||[]).some(t=>t.id==='TX-B'))?'Invalidated':this.sent?'Pending':'Not sent';}
+  get statusA(){return this.confirmations?'Confirmed':this.chain(this.merchant).some(b=>(b.transactions||[]).some(t=>t.id==='TX-B'))?'Invalidated':this.sent?'Pending':'Not sent';}
   get result(){
     if(this.done&&this.config.mode==='finney'&&!this.privateFound)return 'No pre-mined block was found within the observation window. This run is inconclusive; repeat with another seed.';
     if(this.config.mode==='double'&&this.done)return this.receipts>1?'The payment application recorded a duplicate receipt. Native nodes rejected the invalid double-spend block.':'Native nodes rejected the double spend. The payment application kept one valid receipt.';
     if(!this.done)return 'Observe changes in the existing nodes, topology, statistics and Blockchain Explorer.';
     if(this.delivered&&!this.balance)return 'Goods delivered, but the merchant has 0 coins on the valid chain. A double-spend loss occurred.';
-    if(this.delivered)return 'The merchant received 10 teaching coins and delivered the goods. No delivery loss occurred.';
+    if(this.delivered)return 'The merchant received 10 simulated coins and delivered the goods. No delivery loss occurred.';
     return 'The merchant withheld the goods. No delivery loss occurred.';
   }
   get effective(){return {attackerShare:this.attacker.power/this.nodes.reduce((s,n)=>s+n.power,0)*100,confirmations:this.threshold,receiptValidation:this.config.validation||this.config.defended};}
   get paymentStatus(){return this.statusA;}
   recordReceipt(tx){
     const checked=this.config.validation||this.config.defended;
-    const confirmed=this.chain(this.merchant).flatMap(b=>b.teachingTransactions||[]).some(t=>t.id===tx.id&&t.input===tx.input&&t.to==='Merchant'&&t.value===10);
+    const confirmed=this.chain(this.merchant).flatMap(b=>b.transactions||[]).some(t=>t.id===tx.id&&t.input===tx.input&&t.to==='Merchant'&&t.value===10);
     const duplicate=this.receiptRecords.some(r=>r.input===tx.input||r.txId===tx.id);
     const accepted=!checked||(confirmed&&!duplicate);
     this.receiptAttempts.push({step:this.time,txId:tx.id,input:tx.input,accepted,reason:!checked?'Application checks disabled':duplicate?'Duplicate funding source':confirmed?'Confirmed merchant payment':'No matching confirmed merchant payment'});
@@ -99,7 +99,7 @@ export class NativeSession {
     let r=this.random()*total;for(const n of pool){r-=Math.max(0,n.power);if(r<=0)return n;}return pool.at(-1);
   }
   mine(node,tx=[]) {
-    node.currentHeader.teachingTransactions=tx.map(t=>({...t}));
+    node.currentHeader.transactions=tx.map(t=>({...t}));
     const parent=this.chain(node);
     const proposed=node.currentHeader;
     // Ownership is checked independently of the PoW nonce; PoW is produced by original mine().
@@ -107,7 +107,7 @@ export class NativeSession {
     for(const t of tx){if(!utxo.has(t.input))throw Error('Attempted to mine an invalid UTXO');utxo.delete(t.input);}
     const count=node.totalBlocksFound;
     this.api.withRandom(this.random,()=>{for(let attempts=0;attempts<1000000&&node.totalBlocksFound===count;attempts++)node.mine();});
-    if(node.totalBlocksFound===count)throw Error('No block found in this teaching step. Increase the difficulty target in Network.');
+    if(node.totalBlocksFound===count)throw Error('No block found in this test step. Increase the difficulty target in Network.');
     this.api.flush();
     this.log('Native miner found a block',`${node.name} -> height ${node.currentHeader.height-1}; transactions: ${tx.map(t=>t.id).join(', ')||'none'}.`);
     this.considerDelivery();
@@ -138,7 +138,7 @@ export class NativeSession {
   }
   step(){
     if(this.done||!this.active)return;
-    if(this.api.network()!==this.net||this.nodes.some(n=>this.net.peers[n.ID]!==n))throw Error('The native network changed. Reload the teaching session.');
+    if(this.api.network()!==this.net||this.nodes.some(n=>this.net.peers[n.ID]!==n))throw Error('The native network changed. Reload the test session.');
     this.time++;
     if(this.config.mode==='majority')this.majority();
     if(this.config.mode==='finney')this.finney();
@@ -150,10 +150,10 @@ export class NativeSession {
   majority(){
     if(!this.sent){this.send();return;}
     const node=this.choose();const attacker=node===this.attacker;
-    const hasSpend=this.chain(node).some(b=>(b.teachingTransactions||[]).length);
+    const hasSpend=this.chain(node).some(b=>(b.transactions||[]).length);
     this.mine(node,hasSpend?[]:[attacker?this.B:this.A]);
     if(this.delivered&&this.attacker.currentHeader.height>this.merchant.currentHeader.height){this.release();this.done=true;}
-    if(this.time>=50){this.log('Observation window ended','Stopped after 50 teaching steps. No loss within this finite window does not imply permanent safety.');this.done=true;}
+    if(this.time>=50){this.log('Observation window ended','Stopped after 50 test steps. No loss within this finite window does not imply permanent safety.');this.done=true;}
   }
   finney(){
     if(this.phase==='prepare'){
@@ -185,7 +185,7 @@ export class NativeSession {
       return;
     }
     const sender=this.choose(this.honest);const invalid=sender.newHeader(sender.getBlock(sender.currentHeader.height-1));
-    invalid.teachingTransactions=[this.B];
+    invalid.transactions=[this.B];
     this.api.withRandom(this.random,()=>{for(let attempts=0;attempts<1000000&&!invalid.isBlock();attempts++)invalid.guessNonce();});
     if(!invalid.isBlock())throw Error('No demonstration nonce found within the step budget. Reload the run.');
     this.merchant.receive(sender.ID,invalid);
@@ -194,5 +194,5 @@ export class NativeSession {
     this.log('Receipt validation',this.receipts===1?'Validated the confirmed merchant payment and deduplicated its funding source; kept one receipt.':'Checks disabled: the repeated TX-A callback was counted twice. Only one spend exists on the valid chain.');
     this.done=this.confirmations>=this.threshold;
   }
-  report(){return {schemaVersion:2,config:{...this.config},effective:this.effective,steps:this.time,completed:this.done,paymentStatus:this.paymentStatus,privateFound:this.privateFound,result:this.result,merchantBalance:this.balance,confirmations:this.confirmations,delivered:this.delivered,loss:this.delivered&&this.balance===0,reorgs:this.reorgs,rejected:this.rejected,receipts:this.receipts,receiptAttempts:this.receiptAttempts.map(r=>({...r})),nodes:this.nodes.map(n=>({id:n.ID,name:n.name,power:n.power,height:n.currentHeader.height-1,blocksFound:n.totalBlocksFound,blocks:this.chain(n).map(b=>({height:b.height,hash:b.hash,prevHash:b.prevHash,transactions:b.teachingTransactions||[]}))})),logs:this.logs.map(l=>({...l}))};}
+  report(){return {schemaVersion:2,config:{...this.config},effective:this.effective,steps:this.time,completed:this.done,paymentStatus:this.paymentStatus,privateFound:this.privateFound,result:this.result,merchantBalance:this.balance,confirmations:this.confirmations,delivered:this.delivered,loss:this.delivered&&this.balance===0,reorgs:this.reorgs,rejected:this.rejected,receipts:this.receipts,receiptAttempts:this.receiptAttempts.map(r=>({...r})),nodes:this.nodes.map(n=>({id:n.ID,name:n.name,power:n.power,height:n.currentHeader.height-1,blocksFound:n.totalBlocksFound,blocks:this.chain(n).map(b=>({height:b.height,hash:b.hash,prevHash:b.prevHash,transactions:b.transactions||[]}))})),logs:this.logs.map(l=>({...l}))};}
 }

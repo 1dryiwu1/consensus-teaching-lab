@@ -1,5 +1,5 @@
-import { NativeSession, validateConfig } from './native-core.js?v=20261126.2';
-const api=window.SimewuTeaching;
+import { NativeSession, validateConfig } from './native-core.js?v=20261126.3';
+const api=window.SimewuTesting;
 const $=id=>document.getElementById(id);
 let session=null,backup=null,timer=null,busy=false,pair=null,dirty=false,failed=false;
 const hints={majority:'Defense: cap the attacker share at 30% and wait for at least one confirmation. Confirmations alone cannot prevent an ongoing majority attack.',finney:'Defense: reject zero-confirmation delivery and wait for at least one payment confirmation.',race:'Defense: wait for at least one confirmation and suspend delivery on a conflict alert.',double:'Defense: validate chain state and the funding source before recording receipts. Native nodes always reject double spending.'};
@@ -28,14 +28,14 @@ function render(){
   $('nativeState').textContent=!exists?'Not loaded':dirty?'Reload required':failed?'Reload after error':(session.done?'Completed':'Step '+session.time)+' · '+(session.config.defended?'Defense':'Baseline')+(session.config.mode==='double'&&session.config.validation&&!session.config.defended?' · Receipt checks on':'');
   if(!exists||dirty){
     const row=text('tr','');const cell=text('td',dirty?'Parameters changed. Load / Reset to start this configuration.':'Not started');cell.colSpan=6;row.append(cell);$('nativeMetrics').replaceChildren(row);$('nativeLogs').replaceChildren();$('nativeCompareRows').replaceChildren();$('nativeComparison').hidden=true;
-    if(!exists)$('nativeSummary').textContent='Select node roles and load an experiment.';
+    if(!exists)$('nativeSummary').textContent='Select node roles and load a test.';
     return;
   }
   notice(session.result);
   const row=document.createElement('tr');[session.time,session.confirmations,session.balance+' coins',session.delivered?'Delivered':'Withheld',session.reorgs,session.receipts].forEach(v=>row.append(text('td',v)));$('nativeMetrics').replaceChildren(row);
   $('nativeLogs').replaceChildren(...session.logs.slice().reverse().map(e=>{const p=document.createElement('div');p.className='native-log';p.append(text('b',`[${e.time}] ${e.title} `),document.createTextNode(e.detail));return p;}));
 }
-function step(){if(busy||!session||session.done||dirty||failed)return;busy=true;try{session.step();api.refresh();render();if(session.done)pause();}catch(error){pause();failed=true;render();notice(error.message+' Reload the teaching session.');}finally{busy=false;}}
+function step(){if(busy||!session||session.done||dirty||failed)return;busy=true;try{session.step();api.refresh();render();if(session.done)pause();}catch(error){pause();failed=true;render();notice(error.message+' Reload the test session.');}finally{busy=false;}}
 function toggle(){if(timer){pause();return;}if(!session||session.done||dirty||failed)return;timer=setInterval(step,600);$('nativePlay').textContent='Pause';api.running(true);}
 $('nativeLoad').onclick=()=>{try{initialize();}catch(error){notice(error.message);}};
 $('nativeStep').onclick=step;$('nativePlay').onclick=toggle;
@@ -46,9 +46,9 @@ $('nativeCompare').onclick=()=>{
     for(const defended of [false,true]){const run=initialize({...c,defended,validation:defended});while(!run.done)run.step();out.push(run.report());}
     $('nativeDefense').checked=session.config.defended;$('nativeValidation').checked=session.config.validation;
     pair=out;api.refresh();render();$('nativeCompareRows').replaceChildren(...out.map((r,i)=>{const row=document.createElement('tr');[i?'Defense':'Baseline',r.merchantBalance+' coins',r.delivered?'Delivered':'Withheld',r.nodes.reduce((s,n)=>s+n.blocksFound,0),r.result].forEach(v=>row.append(text('td',v)));return row;}));$('nativeComparison').hidden=false;
-  }catch(error){pause();failed=true;render();notice(error.message+' Reload the teaching session.');}
+  }catch(error){pause();failed=true;render();notice(error.message+' Reload the test session.');}
 };
-$('nativeExit').onclick=()=>{pause();api.stop();if(session)session.active=false;api.setSession(null);if(session?.net===api.network()){api.restore(backup);api.clear();}session=null;backup=null;pair=null;dirty=false;failed=false;api.samplerEnabled(true);api.refresh(true);render();notice('Teaching mode exited. Previous node settings were restored and teaching blocks cleared. Native mining is available.');};
+$('nativeExit').onclick=()=>{pause();api.stop();if(session)session.active=false;api.setSession(null);if(session?.net===api.network()){api.restore(backup);api.clear();}session=null;backup=null;pair=null;dirty=false;failed=false;api.samplerEnabled(true);api.refresh(true);render();notice('Test mode exited. Previous node settings were restored and test blocks cleared. Native mining is available.');};
 $('nativeExport').onclick=()=>{if(!session)return;const blob=new Blob([JSON.stringify({experiment:session.report(),comparison:pair},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const link=text('a','');link.href=url;link.download=`Simewu-${session.config.mode}-${session.config.seed}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 $('nativeMode').onchange=()=>{$('nativeConfirmations').value=['finney','race'].includes($('nativeMode').value)?'0':'1';$('nativeDefenseHelp').textContent=hints[$('nativeMode').value];};
 for(const control of document.querySelectorAll('#teachingPanel input,#teachingPanel select'))control.addEventListener('change',()=>{if(!session?.active)return;pause();dirty=true;pair=null;render();notice('Parameters changed. Click Load / Reset to apply them, or Compare Defenses to run both groups.');});

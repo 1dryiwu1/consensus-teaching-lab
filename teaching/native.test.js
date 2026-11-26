@@ -12,7 +12,7 @@ function host(count=4){
   const context=vm.createContext({window:{},Math:Object.create(Math),setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){},$:jq,updateTools(){},clearAllTimeouts(){},DOM_toggleAllMining(){},DOM_toggleMining(){},document:{},updateToolOptions:{visSimulationActive:false}});
   vm.runInContext('let network=null;'+classes+'\nnetwork=new Network();network.difficulty=0.01;network.genesis.hash=0.001;network.genesis.nonce=0.001;\nwindow.Miner=Miner;',context);
   vm.runInContext(readFileSync(new URL('./native-bridge.js',import.meta.url),'utf8'),context);
-  const api=context.window.SimewuTeaching;
+  const api=context.window.SimewuTesting;
   for(let i=0;i<count;i++)new context.window.Miner('Node '+(i+1),10,100,1000,1000);
   const nodes=Object.values(api.network().peers);
   for(const n of nodes)for(const other of nodes)if(other!==n){n.outgoingPeers[other.ID]=100;n.incomingPeers.push(other.ID);}
@@ -42,7 +42,7 @@ test('native block duplicate-spend rejection protects consensus with app validat
 });
 test('upstream Header cloning preserves transaction metadata through receive and query',()=>{
   const s=run({mode:'double'});
-  for(const n of s.nodes){const block=n.queryBlockAtHeight(1);assert.equal(block.teachingTransactions[0].id,'TX-A');assert.equal(block.isBlock(),true);}
+  for(const n of s.nodes){const block=n.queryBlockAtHeight(1);assert.equal(block.transactions[0].id,'TX-A');assert.equal(block.isBlock(),true);}
 });
 test('native mining and defense runs are reproducible with the same seed',()=>{
   for(const mode of ['majority','finney','race','double']){
@@ -72,7 +72,7 @@ test('Finney pre-mining follows public work before withholding and publishes a v
   s.step();assert.equal(s.delivered,true);
   s.random=()=>0.9;s.step();
   assert.equal(s.done,true);assert.equal(s.paymentStatus,'Invalidated');assert.equal(s.balance,0);
-  assert.equal(s.chain(s.merchant).at(-1).teachingTransactions[0].id,'TX-B');
+  assert.equal(s.chain(s.merchant).at(-1).transactions[0].id,'TX-B');
 });
 test('double-spend demonstration waits for the requested six confirmations before delivery',()=>{
   const s=run({mode:'double',confirmations:6,validation:true});
@@ -87,9 +87,9 @@ test('receipt validation rejects an unconfirmed or misdirected notification inst
   assert.equal(s.rejected,1,'native rejection is independent of application receipt processing');
 });
 test('pure validation preserves an existing chain and roles when parameters are invalid',()=>{
-  const {api,nodes}=host();const before=JSON.stringify(nodes.map(n=>({power:n.power,role:n.teachingRole,chain:n.blockchain})));
+  const {api,nodes}=host();const before=JSON.stringify(nodes.map(n=>({power:n.power,role:n.testRole,chain:n.blockchain})));
   for(const override of [{seed:1.5},{confirmations:1.5},{q:Infinity},{defended:'false'}]){
     assert.throws(()=>validateConfig(api,{attacker:nodes[0].ID,merchant:nodes[1].ID,...override}));
-    assert.equal(JSON.stringify(nodes.map(n=>({power:n.power,role:n.teachingRole,chain:n.blockchain}))),before);
+    assert.equal(JSON.stringify(nodes.map(n=>({power:n.power,role:n.testRole,chain:n.blockchain}))),before);
   }
 });
