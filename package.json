@@ -1,0 +1,1 @@
+{"name":"simewu-consensus-teaching-lab","private":true,"type":"module","scripts":{"build":"node teaching/build-native.js","test":"node --test teaching/native.test.js"}}

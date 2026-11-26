@@ -1,0 +1,34 @@
+<section id="teachingPanel" class="collapse mb-3" aria-label="Consensus attack and defense teaching tools">
+ <div class="card text-white bg-dark rounded-0 border-secondary">
+  <div class="card-header d-flex justify-content-between align-items-center"><strong>Consensus Attacks & Defenses · Teaching Tools</strong><span id="nativeState" class="badge badge-secondary">Not loaded</span></div>
+  <div class="card-body">
+   <div class="form-row">
+    <div class="form-group col-md-3"><label for="nativeMode">Experiment</label><select id="nativeMode" class="form-control"><option value="majority">51% Attack</option><option value="finney">Finney Attack</option><option value="race">Race Attack</option><option value="double">Double-Spend Attack</option></select></div>
+    <div class="form-group col-md-3"><label for="nativeAttacker">Attacker node</label><select id="nativeAttacker" class="form-control"></select></div>
+    <div class="form-group col-md-3"><label for="nativeMerchant">Merchant observer</label><select id="nativeMerchant" class="form-control"></select></div>
+    <div class="form-group col-md-3"><label for="nativeConfirmations">Required confirmations</label><select id="nativeConfirmations" class="form-control"><option value="0">0 confirmations</option><option value="1" selected>1 confirmation</option><option value="3">3 confirmations</option><option value="6">6 confirmations</option></select></div>
+   </div>
+   <div class="form-row">
+    <div class="form-group col-md-3"><label for="nativePower">Attacker hash share (%)</label><input id="nativePower" class="form-control" type="number" min="1" max="90" value="60"></div>
+    <div class="form-group col-md-3"><label for="nativeSeed">Random seed</label><input id="nativeSeed" class="form-control" type="number" min="0" max="4294967295" value="42"></div>
+    <div class="form-group col-md-3"><label for="nativeDelay">Race: propagation delay weight</label><select id="nativeDelay" class="form-control"><option value="0">Low · 0</option><option value="2" selected>Medium · 2</option><option value="5">High · 5</option></select></div>
+    <div class="form-group col-md-3"><label for="nativeFee">Race: fee weight</label><select id="nativeFee" class="form-control"><option value="1">Equal · 1</option><option value="3" selected>Higher · 3</option><option value="8">Very high · 8</option></select></div>
+   </div>
+   <div class="d-flex flex-wrap native-options">
+    <label><input id="nativeMesh" type="checkbox" checked> Fully connected teaching topology</label>
+    <label><input id="nativeDefense" type="checkbox"> Enable defense</label>
+    <label><input id="nativeValidation" type="checkbox"> Validate payment receipts</label>
+   </div>
+   <button id="nativeRefreshRoles" type="button" class="btn btn-sm btn-outline-light my-2">Refresh node roles</button><p id="nativeDefenseHelp" class="small text-warning my-2"></p>
+   <p class="small text-light">Loading clears current blocks and adjusts the existing miners to the selected hash share. The topology uses existing nodes; enabling full connectivity adds native connections. Exit restores the previous network settings.</p>
+   <div class="d-flex flex-wrap native-actions">
+    <button id="nativeLoad" type="button" class="btn btn-primary">Load / Reset</button><button id="nativeStep" type="button" class="btn btn-secondary" disabled>Step</button><button id="nativePlay" type="button" class="btn btn-warning" disabled>Run</button><button id="nativeCompare" type="button" class="btn btn-secondary">Compare Defenses</button><button id="nativeExport" type="button" class="btn btn-secondary" disabled>Export Results</button><button id="nativeExit" type="button" class="btn btn-outline-light" disabled>Exit Teaching</button>
+   </div>
+   <div id="nativeSummary" class="alert alert-secondary mt-3 mb-2" role="status">Select node roles and load an experiment. Observe the results in the existing JSON editor, topology, statistics and Blockchain Explorer.</div>
+   <div class="table-responsive"><table class="table table-dark table-sm mb-2" aria-label="Teaching transaction status"><thead><tr><th>Step</th><th>TX-A confirmations</th><th>Merchant balance</th><th>Goods</th><th>Reorgs</th><th>Receipts</th></tr></thead><tbody id="nativeMetrics"><tr><td colspan="6">Not started</td></tr></tbody></table></div>
+   <div id="nativeComparison" hidden class="table-responsive"><table class="table table-dark table-sm"><thead><tr><th>Group</th><th>Merchant balance</th><th>Delivery</th><th>Native blocks</th><th>Result</th></tr></thead><tbody id="nativeCompareRows"></tbody></table></div>
+   <details class="mt-2"><summary>Teaching Event Log</summary><div id="nativeLogs" class="native-logs"></div></details>
+   <details class="mt-2 small"><summary>Principles and Model Notes</summary><p class="mt-2">This tool calls Miner.mine, submit, receive, setBlock and queryBlockAtHeight on the current native network. Teaching transactions are stored in Header.teachingTransactions. The merchant balance is computed by replaying UTXOs from the observer node. Account balance in the original statistics table shows mining rewards; Merchant balance here shows teaching payments.</p><p>Step mode delivers native Headers through a controlled queue along existing outgoingPeers for reproducible observation. Steps do not represent real time, and race propagation is modeled with weights. Equal-difficulty chains are selected by accumulated block count. Higher fees do not guarantee inclusion. Defenses use reduced hash concentration, confirmation waiting, conflict detection and receipt validation. A 50-step observation window cannot establish permanent safety.</p><p>Native data tools remain available while sampling is paused during teaching mode. Coins and identities are abstract teaching objects. The simulation has no connection to wallets, real assets or blockchain nodes.</p><a class="text-warning" href="LICENSE">Simewu MIT License · © 2019 Simeon</a></details>
+  </div>
+ </div>
+</section>

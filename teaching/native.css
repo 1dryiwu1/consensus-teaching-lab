@@ -1,0 +1,14 @@
+/* Small additive controls; all page layout, colors and widgets remain upstream Bootstrap. */
+#teachingPanel select.form-control{padding:.3rem .6rem!important;height:38px;min-height:38px}
+#teachingPanel input.form-control{height:38px}
+#teachingPanel .native-options{gap:18px}
+#teachingPanel .native-options label{margin-bottom:0;font-size:.85rem}
+#teachingPanel .native-actions{gap:6px}
+#teachingPanel .native-logs{max-height:220px;overflow:auto;padding:8px 0}
+#teachingPanel .native-log{padding:7px 0;border-bottom:1px solid #6c757d;font-size:.8rem}
+#teachingPanel summary{cursor:pointer}
+#teachingPanel .table td,#teachingPanel .table th{white-space:normal;vertical-align:middle;min-width:72px}
+#teachingPanel .table{font-size:.82rem}
+#teachingPanel #nativeSummary{font-size:.88rem}
+#teachingPanel label{font-size:.85rem}
+@media print{#teachingPanel{display:block!important}.native-logs{max-height:none!important}}

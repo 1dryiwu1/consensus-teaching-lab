@@ -19,6 +19,7 @@
 	<link rel='stylesheet' href='lib/codemirror/codemirror.css'>
 	<link rel='stylesheet' href='lib/codemirror/material-darker.css'>
 	<link rel='stylesheet' href='style.min.css'>
+<link rel='stylesheet' href='teaching/native.css'>
 
 	<!-- Scripts -->
 	<script type='text/javascript' src='lib/vis-network.min.js'></script>
@@ -41,8 +42,7 @@
 	<div class='container bg-light rounded pb-3'>
 		<div class='py-2 text-center'>
 			<h1 class='display-4 d-inline user-select-none'>Blockchain Simulator</h1> <span
-				class='badge badge-primary user-select-none'>v1.2</span> <span class='badge badge-secondary'><a
-					class='text-white user-select-none' href='index_v0.12.html'>v0.12</a></span>
+				class='badge badge-primary user-select-none'>v1.2</span> 
 		</div>
 		<div class='jumbotron p-3 mb-3'>
 			<div class='row'>
@@ -79,8 +79,7 @@
 								<a class='dropdown-item' data-toggle='modal' data-target='#loadFromClipboardModal'
 									onclick='DOM_loadFromClipboard()'>Load network from clipboard</a>
 								<div class='dropdown-divider'></div>
-								<a class='dropdown-item' href='https://github.com/simewu/blockchain-simulator'
-									target='_blank'>View on GitHub</a>
+								
 								<div class='dropdown-divider'></div>
 								<a class='dropdown-item' data-toggle='modal' data-target='#aboutModal'
 									onclick='loadAboutModal()'>About</a>
@@ -160,7 +159,8 @@
 							</div>
 						</div>
 
-						<div class='btn-group w-100' style='max-height:35px;cursor:pointer'>
+						<div class='btn-group w-100'><button id='nativeOpen' type='button' class='btn btn-dark rounded-0' data-toggle='collapse' data-target='#teachingPanel' aria-expanded='false' aria-controls='teachingPanel'>Teaching</button></div>
+<div class='btn-group w-100' style='max-height:35px;cursor:pointer'>
 
 							<!-- Display Options Dropdown -->
 							<button type='button' class='btn btn-dark dropdown-toggle dropdown-toggle-split rounded-0'
@@ -231,7 +231,42 @@
 				</div>
 			</div>
 		</div>
-		<div class='row'>
+		<section id="teachingPanel" class="collapse mb-3" aria-label="Consensus attack and defense teaching tools">
+ <div class="card text-white bg-dark rounded-0 border-secondary">
+  <div class="card-header d-flex justify-content-between align-items-center"><strong>Consensus Attacks & Defenses · Teaching Tools</strong><span id="nativeState" class="badge badge-secondary">Not loaded</span></div>
+  <div class="card-body">
+   <div class="form-row">
+    <div class="form-group col-md-3"><label for="nativeMode">Experiment</label><select id="nativeMode" class="form-control"><option value="majority">51% Attack</option><option value="finney">Finney Attack</option><option value="race">Race Attack</option><option value="double">Double-Spend Attack</option></select></div>
+    <div class="form-group col-md-3"><label for="nativeAttacker">Attacker node</label><select id="nativeAttacker" class="form-control"></select></div>
+    <div class="form-group col-md-3"><label for="nativeMerchant">Merchant observer</label><select id="nativeMerchant" class="form-control"></select></div>
+    <div class="form-group col-md-3"><label for="nativeConfirmations">Required confirmations</label><select id="nativeConfirmations" class="form-control"><option value="0">0 confirmations</option><option value="1" selected>1 confirmation</option><option value="3">3 confirmations</option><option value="6">6 confirmations</option></select></div>
+   </div>
+   <div class="form-row">
+    <div class="form-group col-md-3"><label for="nativePower">Attacker hash share (%)</label><input id="nativePower" class="form-control" type="number" min="1" max="90" value="60"></div>
+    <div class="form-group col-md-3"><label for="nativeSeed">Random seed</label><input id="nativeSeed" class="form-control" type="number" min="0" max="4294967295" value="42"></div>
+    <div class="form-group col-md-3"><label for="nativeDelay">Race: propagation delay weight</label><select id="nativeDelay" class="form-control"><option value="0">Low · 0</option><option value="2" selected>Medium · 2</option><option value="5">High · 5</option></select></div>
+    <div class="form-group col-md-3"><label for="nativeFee">Race: fee weight</label><select id="nativeFee" class="form-control"><option value="1">Equal · 1</option><option value="3" selected>Higher · 3</option><option value="8">Very high · 8</option></select></div>
+   </div>
+   <div class="d-flex flex-wrap native-options">
+    <label><input id="nativeMesh" type="checkbox" checked> Fully connected teaching topology</label>
+    <label><input id="nativeDefense" type="checkbox"> Enable defense</label>
+    <label><input id="nativeValidation" type="checkbox"> Validate payment receipts</label>
+   </div>
+   <button id="nativeRefreshRoles" type="button" class="btn btn-sm btn-outline-light my-2">Refresh node roles</button><p id="nativeDefenseHelp" class="small text-warning my-2"></p>
+   <p class="small text-light">Loading clears current blocks and adjusts the existing miners to the selected hash share. The topology uses existing nodes; enabling full connectivity adds native connections. Exit restores the previous network settings.</p>
+   <div class="d-flex flex-wrap native-actions">
+    <button id="nativeLoad" type="button" class="btn btn-primary">Load / Reset</button><button id="nativeStep" type="button" class="btn btn-secondary" disabled>Step</button><button id="nativePlay" type="button" class="btn btn-warning" disabled>Run</button><button id="nativeCompare" type="button" class="btn btn-secondary">Compare Defenses</button><button id="nativeExport" type="button" class="btn btn-secondary" disabled>Export Results</button><button id="nativeExit" type="button" class="btn btn-outline-light" disabled>Exit Teaching</button>
+   </div>
+   <div id="nativeSummary" class="alert alert-secondary mt-3 mb-2" role="status">Select node roles and load an experiment. Observe the results in the existing JSON editor, topology, statistics and Blockchain Explorer.</div>
+   <div class="table-responsive"><table class="table table-dark table-sm mb-2" aria-label="Teaching transaction status"><thead><tr><th>Step</th><th>TX-A confirmations</th><th>Merchant balance</th><th>Goods</th><th>Reorgs</th><th>Receipts</th></tr></thead><tbody id="nativeMetrics"><tr><td colspan="6">Not started</td></tr></tbody></table></div>
+   <div id="nativeComparison" hidden class="table-responsive"><table class="table table-dark table-sm"><thead><tr><th>Group</th><th>Merchant balance</th><th>Delivery</th><th>Native blocks</th><th>Result</th></tr></thead><tbody id="nativeCompareRows"></tbody></table></div>
+   <details class="mt-2"><summary>Teaching Event Log</summary><div id="nativeLogs" class="native-logs"></div></details>
+   <details class="mt-2 small"><summary>Principles and Model Notes</summary><p class="mt-2">This tool calls Miner.mine, submit, receive, setBlock and queryBlockAtHeight on the current native network. Teaching transactions are stored in Header.teachingTransactions. The merchant balance is computed by replaying UTXOs from the observer node. Account balance in the original statistics table shows mining rewards; Merchant balance here shows teaching payments.</p><p>Step mode delivers native Headers through a controlled queue along existing outgoingPeers for reproducible observation. Steps do not represent real time, and race propagation is modeled with weights. Equal-difficulty chains are selected by accumulated block count. Higher fees do not guarantee inclusion. Defenses use reduced hash concentration, confirmation waiting, conflict detection and receipt validation. A 50-step observation window cannot establish permanent safety.</p><p>Native data tools remain available while sampling is paused during teaching mode. Coins and identities are abstract teaching objects. The simulation has no connection to wallets, real assets or blockchain nodes.</p><a class="text-warning" href="LICENSE">Simewu MIT License · © 2019 Simeon</a></details>
+  </div>
+ </div>
+</section>
+
+<div class='row'>
 			<div class='col-md-12'>
 				<span id='canvasVisualizerSpan'></span>
 				<div id='networkVisualizer'></div>
@@ -598,37 +633,9 @@
 						<button type='button' class='close' data-dismiss='modal'>&times;</button>
 					</div>
 					<div class='modal-body' style='font-size:small'>
-						<p>
-							Blockchain and the proof-of-work (PoW) distributed consensus protocol rely on peer-to-peer
-							(P2P) networking. We introduce a PoW P2P simulator for the modeling and analyses of
-							permissionless blockchain and cryptocurrency. We publish our simulator in open source to
-							facilitate its use for blockchain and P2P networking research and especially recommend it
-							for scalability research or preliminary testing.
-							<hr>
-							Visit the GitHub repository <a
-								href='https://github.com/simewu/blockchain-simulator'>here</a>. Additionally, if you
-							have any questions, comments, or suggestions, please send them to <span
-								id='contactAddress'></span>.
-							<hr>
-							We appreciate you using our app. If you'd like to support us, donations can be made to the
-							following Bitcoin address <a
-								href='https://www.blockchain.com/btc/address/188R8dBjRcCyR7MPwtY6tWiFyapdBapGFh'
-								target='_blank'>188R8dBjRcCyR7MPwtY6tWiFyapdBapGFh</a>.
-						</p>
-						<!-- Bitcoin Address QR Code -->
-						<p style='text-align:center'>
-							<a href='https://www.blockchain.com/btc/address/188R8dBjRcCyR7MPwtY6tWiFyapdBapGFh'
-								target='_blank'>
-								<svg shape-rendering='crispEdges' height='128' width='128'
-									style='display:block;margin:5px auto' viewBox='0 0 29 29' class='qrcode'>
-									<path fill='#FFF' d='M0,0 h29v29H0z'></path>
-									<path fill='#000'
-										d='M0 0h7v1H0zM8 0h1v1H8zM10 0h1v1H10zM12 0h1v1H12zM15 0h4v1H15zM20 0h1v1H20zM22,0 h7v1H22zM0 1h1v1H0zM6 1h1v1H6zM9 1h6v1H9zM17 1h2v1H17zM22 1h1v1H22zM28,1 h1v1H28zM0 2h1v1H0zM2 2h3v1H2zM6 2h1v1H6zM8 2h3v1H8zM13 2h1v1H13zM18 2h1v1H18zM20 2h1v1H20zM22 2h1v1H22zM24 2h3v1H24zM28,2 h1v1H28zM0 3h1v1H0zM2 3h3v1H2zM6 3h1v1H6zM8 3h3v1H8zM12 3h4v1H12zM20 3h1v1H20zM22 3h1v1H22zM24 3h3v1H24zM28,3 h1v1H28zM0 4h1v1H0zM2 4h3v1H2zM6 4h1v1H6zM8 4h1v1H8zM11 4h2v1H11zM14 4h7v1H14zM22 4h1v1H22zM24 4h3v1H24zM28,4 h1v1H28zM0 5h1v1H0zM6 5h1v1H6zM10 5h2v1H10zM13 5h1v1H13zM16 5h1v1H16zM19 5h1v1H19zM22 5h1v1H22zM28,5 h1v1H28zM0 6h7v1H0zM8 6h1v1H8zM10 6h1v1H10zM12 6h1v1H12zM14 6h1v1H14zM16 6h1v1H16zM18 6h1v1H18zM20 6h1v1H20zM22,6 h7v1H22zM10 7h1v1H10zM12 7h1v1H12zM17 7h1v1H17zM19 7h2v1H19zM0 8h4v1H0zM6 8h1v1H6zM8 8h1v1H8zM10 8h3v1H10zM14 8h1v1H14zM17 8h5v1H17zM24 8h3v1H24zM28,8 h1v1H28zM0 9h1v1H0zM5 9h1v1H5zM8 9h1v1H8zM10 9h1v1H10zM12 9h1v1H12zM14 9h1v1H14zM16 9h1v1H16zM20 9h1v1H20zM22 9h1v1H22zM24 9h1v1H24zM27,9 h2v1H27zM0 10h1v1H0zM2 10h2v1H2zM6 10h1v1H6zM9 10h4v1H9zM14 10h1v1H14zM16 10h1v1H16zM18 10h1v1H18zM22 10h4v1H22zM27 10h1v1H27zM0 11h1v1H0zM3 11h2v1H3zM9 11h2v1H9zM13 11h1v1H13zM16 11h1v1H16zM18 11h2v1H18zM22 11h1v1H22zM28,11 h1v1H28zM0 12h2v1H0zM6 12h2v1H6zM9 12h2v1H9zM12 12h1v1H12zM14 12h2v1H14zM17 12h1v1H17zM19 12h2v1H19zM23 12h2v1H23zM26 12h1v1H26zM1 13h1v1H1zM4 13h2v1H4zM7 13h1v1H7zM11 13h2v1H11zM14 13h6v1H14zM22 13h1v1H22zM25 13h1v1H25zM27,13 h2v1H27zM1 14h2v1H1zM5 14h2v1H5zM9 14h1v1H9zM11 14h1v1H11zM14 14h1v1H14zM18 14h5v1H18zM26,14 h3v1H26zM2 15h4v1H2zM7 15h2v1H7zM10 15h2v1H10zM14 15h2v1H14zM18 15h2v1H18zM21 15h1v1H21zM25 15h1v1H25zM0 16h4v1H0zM6 16h4v1H6zM12 16h1v1H12zM15 16h4v1H15zM20 16h2v1H20zM24 16h1v1H24zM28,16 h1v1H28zM2 17h1v1H2zM4 17h1v1H4zM7 17h1v1H7zM10 17h1v1H10zM13 17h1v1H13zM15 17h1v1H15zM17 17h4v1H17zM22 17h1v1H22zM25 17h2v1H25zM0 18h1v1H0zM2 18h1v1H2zM6 18h4v1H6zM13 18h3v1H13zM18 18h1v1H18zM20 18h2v1H20zM24 18h2v1H24zM2 19h1v1H2zM4 19h1v1H4zM7 19h2v1H7zM10 19h2v1H10zM14 19h7v1H14zM22 19h5v1H22zM28,19 h1v1H28zM1 20h2v1H1zM4 20h3v1H4zM8 20h2v1H8zM14 20h1v1H14zM16 20h2v1H16zM19 20h8v1H19zM28,20 h1v1H28zM8 21h1v1H8zM13 21h1v1H13zM15 21h2v1H15zM20 21h1v1H20zM24,21 h5v1H24zM0 22h7v1H0zM9 22h2v1H9zM14 22h1v1H14zM16 22h1v1H16zM18 22h3v1H18zM22 22h1v1H22zM24 22h1v1H24zM27 22h1v1H27zM0 23h1v1H0zM6 23h1v1H6zM11 23h3v1H11zM16 23h1v1H16zM20 23h1v1H20zM24 23h2v1H24zM0 24h1v1H0zM2 24h3v1H2zM6 24h1v1H6zM9 24h3v1H9zM17 24h1v1H17zM20,24 h9v1H20zM0 25h1v1H0zM2 25h3v1H2zM6 25h1v1H6zM8 25h1v1H8zM11 25h1v1H11zM13 25h6v1H13zM21 25h1v1H21zM24 25h1v1H24zM28,25 h1v1H28zM0 26h1v1H0zM2 26h3v1H2zM6 26h1v1H6zM8 26h3v1H8zM12 26h1v1H12zM14 26h1v1H14zM18 26h2v1H18zM25 26h2v1H25zM28,26 h1v1H28zM0 27h1v1H0zM6 27h1v1H6zM8 27h1v1H8zM10 27h1v1H10zM12 27h2v1H12zM16 27h1v1H16zM18 27h2v1H18zM21 27h4v1H21zM27 27h1v1H27zM0 28h7v1H0zM8 28h1v1H8zM11 28h1v1H11zM16 28h5v1H16zM22 28h2v1H22zM25 28h1v1H25zM27 28h1v1H27z'>
-									</path>
-								</svg>
-							</a>
-						</p>
-					</div>
+<p>A proof-of-work network simulator with integrated consensus attack and defense teaching tools.</p>
+<p>Based on Blockchain Simulator. Copyright (c) 2019 Simeon. Distributed under the MIT License.</p>
+</div>
 				</div>
 			</div>
 		</div>
@@ -1519,7 +1526,7 @@
 	setupSampleCodeEditors();
 
 	const jsoneditorContainer = document.getElementById('jsoneditor');
-	const jsoneditor = new JSONEditor(jsoneditorContainer, {
+	const jsoneditor = new JSONEditor(jsoneditorContainer, { language: "en",
 		mode: 'tree',
 		modes: ['code', 'form', 'tree'],
 		onChangeText: function (jsonString) {
@@ -1527,12 +1534,12 @@
 		},
 	});
 	const topologyjsoneditorContainer = document.getElementById('topologyjsoneditor');
-	const topologyjsoneditor = new JSONEditor(topologyjsoneditorContainer, {
+	const topologyjsoneditor = new JSONEditor(topologyjsoneditorContainer, { language: "en",
 		mode: 'form',
 		modes: ['code', 'form', 'text', 'tree', 'view']
 	});
 	const networkjsoneditorContainer = document.getElementById('networkjsoneditor');
-	const networkjsoneditor = new JSONEditor(networkjsoneditorContainer, {
+	const networkjsoneditor = new JSONEditor(networkjsoneditorContainer, { language: "en",
 		mode: 'view',
 		modes: ['code', 'form', 'text', 'tree', 'view'],
 		onChangeText: function (jsonString) {
@@ -5402,7 +5409,10 @@
 		if (onError != null) script.onerror = onError;
 	}
 	// Optional page analytics
-	makeScriptTag(document.currentScript, 'lib/page_analytics.js', true, () => { });
+	// Optional upstream analytics disabled in teaching distribution.
 </script>
 
+<script src='teaching/site-links.js'></script>
+<script src='teaching/native-bridge.js'></script>
+<script type='module' src='teaching/native-ui.js'></script>
 </html>
