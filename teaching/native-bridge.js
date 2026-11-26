@@ -25,8 +25,14 @@
     mesh(){for(const n of Object.values(network.peers))for(const other of Object.values(network.peers))if(n!==other&&n.outgoingPeers[other.ID]===undefined)n.addConnection(other.ID,false);},
     snapshot(){return {nodes:Object.values(network.peers).map(n=>({id:n.ID,power:n.power,latency:n.latency,outgoing:{...n.outgoingPeers}}))};},
     restore(snapshot){for(const data of snapshot.nodes){const n=network.peers[data.id];if(!n)continue;n.power=data.power;n.latency=data.latency;n.outgoingPeers={...data.outgoing};delete n.teachingRole;}for(const n of Object.values(network.peers))n.incomingPeers=[];for(const n of Object.values(network.peers))for(const to in n.outgoingPeers)network.peers[to]?.incomingPeers.push(n.ID);},
-    refresh(rebuild=false){if(rebuild)_updateMinerList();updateMinerStatsTable();updateMinerJsonEditor();if(active?.active&&network.peers[active.merchant.ID]){$('#explorerMinerName').val(active.merchant.ID);$('#explorerMinerBlock').val(active.merchant.currentHeader.height-1);}changeExplorerMiner();if(rebuild)vis_setupNetworkSimulation();requestVisRedraw();},
-    select(id){clearTimeout(updateToolOptions.selectMinerTimeout);updateToolOptions.selectMinerTimeout=null;_selectMiner(id,false);},
+    refresh(rebuild=false){if(rebuild){_updateMinerList();clearTimeout(updateToolOptions.selectMinerTimeout);updateToolOptions.selectMinerTimeout=null;$('#minerList').val(updateToolOptions.selectedMiner);}updateMinerStatsTable();updateMinerJsonEditor();if(active?.active&&network.peers[active.merchant.ID]){$('#explorerMinerName').val(active.merchant.ID);$('#explorerMinerBlock').val(active.merchant.currentHeader.height-1);}changeExplorerMiner();if(rebuild)vis_setupNetworkSimulation();requestVisRedraw();},
+    select(id){
+      // Do not fire the upstream change handler: it schedules selectMiner() with scrolling enabled.
+      clearTimeout(updateToolOptions.selectMinerTimeout);updateToolOptions.selectMinerTimeout=null;
+      updateToolOptions.selectedMinerPrev=updateToolOptions.selectedMiner;updateToolOptions.selectedMiner=id;
+      $('#minerList').val(id);$('#explorerMinerName').val(id);
+      updateMinerJsonEditor(network.peers[id]);drawCanvasVisualizerMinerCircles();
+    },
     running(value){$('#toggleMiningBtn').text(value?'Stop All Miners':'Start All Miners').attr('class',value?'btn btn-warning rounded-0':'btn btn-dark rounded-0');},
     samplerEnabled(enabled){document.getElementById('toggleSamplingBtn').disabled=!enabled;}
   };

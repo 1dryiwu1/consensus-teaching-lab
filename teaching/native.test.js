@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
-import {NativeSession,ledger} from './native-core.js';
+import {NativeSession,ledger,validateConfig} from './native-core.js';
 
 // Run the actual upstream classes and actual browser bridge, without a DOM renderer.
 function host(count=4){
@@ -61,4 +61,35 @@ test('shared-role and invalid numerical configurations do not mutate native powe
   assert.throws(()=>new NativeSession(api,{attacker:nodes[0].ID,merchant:nodes[0].ID}));
   assert.throws(()=>new NativeSession(api,{attacker:nodes[0].ID,merchant:nodes[1].ID,q:NaN}));
   assert.equal(nodes[0].power,10);
+});
+test('Finney pre-mining follows public work before withholding and publishes a valid conflicting spend',()=>{
+  const {api,nodes}=host();
+  const s=new NativeSession(api,{mode:'finney',attacker:nodes[0].ID,merchant:nodes[1].ID,confirmations:0});api.setSession(s);
+  s.choose=()=>nodes[1];s.step();
+  assert.equal(nodes[0].currentHeader.height,2,'the attacker must follow honest blocks before pre-mining');
+  s.choose=()=>nodes[0];s.step();
+  assert.equal(s.privateFound,true);assert.equal(nodes[0].currentHeader.height,3);assert.equal(nodes[1].currentHeader.height,2);
+  s.step();assert.equal(s.delivered,true);
+  s.random=()=>0.9;s.step();
+  assert.equal(s.done,true);assert.equal(s.paymentStatus,'Invalidated');assert.equal(s.balance,0);
+  assert.equal(s.chain(s.merchant).at(-1).teachingTransactions[0].id,'TX-B');
+});
+test('double-spend demonstration waits for the requested six confirmations before delivery',()=>{
+  const s=run({mode:'double',confirmations:6,validation:true});
+  assert.equal(s.confirmations,6);assert.equal(s.delivered,true);assert.equal(s.receipts,1);assert.equal(s.time,8);
+  assert.deepEqual(s.receiptAttempts.map(r=>r.accepted),[true,false]);
+  assert.equal(s.receiptAttempts[1].reason,'Duplicate funding source');
+});
+test('receipt validation rejects an unconfirmed or misdirected notification instead of counting it',()=>{
+  const s=run({mode:'double',validation:true});
+  assert.equal(s.recordReceipt(s.B),false);assert.equal(s.receipts,1);
+  assert.equal(s.receiptRecords[0].txId,'TX-A');
+  assert.equal(s.rejected,1,'native rejection is independent of application receipt processing');
+});
+test('pure validation preserves an existing chain and roles when parameters are invalid',()=>{
+  const {api,nodes}=host();const before=JSON.stringify(nodes.map(n=>({power:n.power,role:n.teachingRole,chain:n.blockchain})));
+  for(const override of [{seed:1.5},{confirmations:1.5},{q:Infinity},{defended:'false'}]){
+    assert.throws(()=>validateConfig(api,{attacker:nodes[0].ID,merchant:nodes[1].ID,...override}));
+    assert.equal(JSON.stringify(nodes.map(n=>({power:n.power,role:n.teachingRole,chain:n.blockchain}))),before);
+  }
 });

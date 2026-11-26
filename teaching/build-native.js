@@ -12,6 +12,6 @@ const target="<div class='row'>\n\t\t\t<div class='col-md-12'>\n\t\t\t\t<span id
 html=html.replace(/\r\n/g,'\n');
 if(!html.includes(target))throw Error('Cannot locate upstream visualization');
 html=html.replace(target,readFileSync(new URL('teaching/native-panel.html',root),'utf8')+'\n'+target);
-html=html.replace('</html>',"<script src='teaching/site-links.js'></script>\n<script src='teaching/native-bridge.js'></script>\n<script type='module' src='teaching/native-ui.js'></script>\n</html>");
+html=html.replace('</html>',"<script src='teaching/site-links.js'></script>\n<script src='teaching/native-bridge.js?v=20261126.2'></script>\n<script type='module' src='teaching/native-ui.js?v=20261126.2'></script>\n</html>");
 html=html.replace(/new JSONEditor\((\w+),\s*\{/g,'new JSONEditor($1, { language: "en",');
 writeFileSync(new URL('index.html',root),html);
