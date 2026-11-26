@@ -9,7 +9,7 @@ function host(count=4){
   const source=readFileSync(new URL('../original.html',import.meta.url),'utf8');
   const classes=source.slice(source.indexOf('class Network {'),source.indexOf('\n\tnetwork = new Network();'));
   const jq=()=>({html(){return this;},text(){return this;},attr(){return this;}});
-  const context=vm.createContext({window:{},Math:Object.create(Math),setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){},$:jq,updateTools(){},clearAllTimeouts(){},DOM_toggleAllMining(){},DOM_toggleMining(){},document:{},updateToolOptions:{visSimulationActive:false}});
+  const context=vm.createContext({window:{},Math:Object.create(Math),setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){},$:jq,updateTools(){},clearAllTimeouts(){},DOM_toggleAllMining(){},DOM_toggleMining(){},_vis_setupNetworkSimulation(){},_selectMiner(){},document:{getElementById(){return null;}},updateToolOptions:{visSimulationActive:false}});
   vm.runInContext('let network=null;'+classes+'\nnetwork=new Network();network.difficulty=0.01;network.genesis.hash=0.001;network.genesis.nonce=0.001;\nwindow.Miner=Miner;',context);
   vm.runInContext(readFileSync(new URL('./native-bridge.js',import.meta.url),'utf8'),context);
   const api=context.window.SimewuTesting;
@@ -92,4 +92,14 @@ test('pure validation preserves an existing chain and roles when parameters are 
     assert.throws(()=>validateConfig(api,{attacker:nodes[0].ID,merchant:nodes[1].ID,...override}));
     assert.equal(JSON.stringify(nodes.map(n=>({power:n.power,role:n.testRole,chain:n.blockchain}))),before);
   }
+});
+test('dense display shows only focused neighbors without changing the actual 870 directed connections',()=>{
+  const {api,nodes}=host(30);const before=JSON.stringify(nodes.map(n=>n.outgoingPeers));
+  const s=new NativeSession(api,{attacker:nodes[0].ID,merchant:nodes[1].ID});api.setSession(s);
+  const plan=api.visualPlan();assert.equal(plan.count,870);assert.equal(plan.links.length,29);
+  assert.equal(plan.selected,nodes[1].ID);assert.equal(Object.keys(plan.positions).length,30);
+  assert.ok(plan.links.every(l=>l.outgoing&&l.incoming));
+  const coords=Object.values(plan.positions);
+  for(let i=0;i<coords.length;i++)for(let j=i+1;j<coords.length;j++)assert.ok(Math.hypot(coords[i].x-coords[j].x,coords[i].y-coords[j].y)>80);
+  assert.equal(JSON.stringify(nodes.map(n=>n.outgoingPeers)),before);
 });
