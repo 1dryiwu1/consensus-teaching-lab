@@ -1,6 +1,11 @@
 import {readFileSync,writeFileSync} from 'node:fs';
 const root=new URL('../',import.meta.url);
 let html=readFileSync(new URL('original.html',root),'utf8').replace(/^\uFEFF/,'');
+// Start new networks with seven nodes; explicitly loaded networks retain their own size.
+const startupStart=html.indexOf("$(document).ready(function () {");
+const startupCount=html.indexOf("'Number of peers': 30,",startupStart);
+if(startupStart<0||startupCount<0)throw Error('Cannot locate upstream startup node count');
+html=html.slice(0,startupCount)+html.slice(startupCount).replace("'Number of peers': 30,","'Number of peers': 7,");
 html=html.replace("<link rel='stylesheet' href='style.min.css'>","<link rel='stylesheet' href='style.min.css'>\n<link rel='stylesheet' href='teaching/native.css'>");
 const display=html.indexOf('<!-- Display Options Dropdown -->');
 const menuAt=html.lastIndexOf("<div class='btn-group w-100'",display);
